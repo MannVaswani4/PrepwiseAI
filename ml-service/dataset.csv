@@ -1,0 +1,10 @@
+text,score,label,question,role
+"I used the STAR method to describe a project where I optimized a SQL query. I identified the bottleneck using EXPLAIN ANALYZE, added a composite index, and reduced latency by 40%.",9,Good,Tell me about a challenging project you worked on.,Software Engineer
+"I worked on a website and fixed some bugs. It was hard but I managed to finish it on time by working extra hours and asking my lead for help.",5,Average,Tell me about a challenging project you worked on.,Software Engineer
+"I don't really have a specific project but I am a hard worker and I always try my best to do what is asked of me in any situation.",2,Poor,Tell me about a challenging project you worked on.,Software Engineer
+"Decorators are a tool in Python that allow you to wrap another function in order to extend its behavior without permanently modifying it. They use the @ symbol.",8,Good,Explain the concept of decorators in Python.,Software Engineer
+"It is something you put before a function with an @ sign to make it do something else or add some logging.",5,Average,Explain the concept of decorators in Python.,Software Engineer
+"I think it is for making the code look pretty and more organized in the file.",2,Poor,Explain the concept of decorators in Python.,Software Engineer
+"My approach to system design is to first clarify requirements, then estimate scale, define the data model, and finally design the high-level architecture with scalability in mind.",9,Good,What is your approach to system design?,Software Engineer
+"I usually start by drawing some boxes and arrows and then I think about how the database will work with the API.",5,Average,What is your approach to system design?,Software Engineer
+"I just start coding and see where it goes and then I fix things as they break during the process.",1,Poor,What is your approach to system design?,Software Engineer

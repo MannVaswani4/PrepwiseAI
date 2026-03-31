@@ -1,0 +1,44 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String             @id @default(uuid())
+  email         String             @unique
+  passwordHash  String
+  createdAt     DateTime           @default(now())
+  sessions      InterviewSession[]
+}
+
+model InterviewSession {
+  id           String               @id @default(uuid())
+  userId       String
+  user         User                 @relation(fields: [userId], references: [id])
+  role         String // e.g., "Software Engineer", "PM", "AI Engineer"
+  status       String // "IN_PROGRESS", "COMPLETED"
+  overallScore Float?
+  resumeText   String?              @db.Text
+  createdAt    DateTime             @default(now())
+  questions    QuestionAndAnswer[]
+}
+
+model QuestionAndAnswer {
+  id                   String           @id @default(uuid())
+  sessionId            String
+  session              InterviewSession @relation(fields: [sessionId], references: [id])
+  questionText         String           @db.Text
+  difficultyLevel      Int
+  userAnswerTranscript String?          @db.Text
+  mlScore              Float?
+  llmFeedback          String?          @db.Text
+  startedAt            DateTime         @default(now())
+  answeredAt           DateTime?
+}
