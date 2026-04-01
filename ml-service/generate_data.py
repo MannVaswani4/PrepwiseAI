@@ -8,13 +8,17 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def generate_synthetic_answers():
-    roles = ["Software Engineer", "Product Manager", "AI Engineer"]
+    roles = ["Software Engineer", "Product Manager", "AI Engineer", "Data Scientist", "System Architect"]
     questions = [
         "Tell me about a challenging project you worked on.",
         "How do you handle conflict in a team?",
         "Explain the concept of decorators in Python.",
         "What is your approach to system design?",
-        "How do you stay updated with the latest AI trends?"
+        "How do you stay updated with the latest AI trends?",
+        "Describe a time you failed and what you learned.",
+        "Explain how you would scale a real-time messaging application.",
+        "How do you prioritize competing product requirements?",
+        "What is the difference between supervised and unsupervised learning?"
     ]
     
     data = []
@@ -26,12 +30,14 @@ def generate_synthetic_answers():
             Role: {role}
             Question: {q}
             
-            Generate 3 types of answers:
-            1. A 'Good' answer (Score 8-10): Clear, structured (STAR method), technical depth.
-            2. An 'Average' answer (Score 5-7): Correct but lacks depth or structure.
-            3. A 'Poor' answer (Score 1-4): Vague, incorrect, or extremely short.
+            Generate 4 types of answers:
+            1. An 'Expert' answer (Score 9.5-10): Perfectly structured (STAR method), high technical depth, precise terminology.
+            2. A 'Good' answer (Score 7.5-9): Clear, structured, good technical depth.
+            3. An 'Average' answer (Score 4-7): Correct but lacks depth or structure.
+            4. A 'Poor' answer (Score 0-3.5): Vague, incorrect, or extremely short.
             
             Return ONLY a JSON list of objects with keys: "text", "score", "label".
+            "label" should be one of: "Poor", "Average", "Good", "Expert".
             """
             
             response = client.chat.completions.create(

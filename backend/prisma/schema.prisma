@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,34 +8,34 @@ datasource db {
 }
 
 model User {
-  id            String             @id @default(uuid())
-  email         String             @unique
-  passwordHash  String
-  createdAt     DateTime           @default(now())
-  sessions      InterviewSession[]
+  id           String             @id @default(uuid())
+  email        String             @unique
+  passwordHash String
+  createdAt    DateTime           @default(now())
+  sessions     InterviewSession[]
 }
 
 model InterviewSession {
-  id           String               @id @default(uuid())
+  id           String              @id @default(uuid())
   userId       String
-  user         User                 @relation(fields: [userId], references: [id])
-  role         String // e.g., "Software Engineer", "PM", "AI Engineer"
-  status       String // "IN_PROGRESS", "COMPLETED"
+  role         String
+  status       String
   overallScore Float?
-  resumeText   String?              @db.Text
-  createdAt    DateTime             @default(now())
+  resumeText   String?
+  createdAt    DateTime            @default(now())
+  user         User                @relation(fields: [userId], references: [id])
   questions    QuestionAndAnswer[]
 }
 
 model QuestionAndAnswer {
   id                   String           @id @default(uuid())
   sessionId            String
-  session              InterviewSession @relation(fields: [sessionId], references: [id])
-  questionText         String           @db.Text
+  questionText         String
   difficultyLevel      Int
-  userAnswerTranscript String?          @db.Text
+  userAnswerTranscript String?
   mlScore              Float?
-  llmFeedback          String?          @db.Text
+  llmFeedback          String?
   startedAt            DateTime         @default(now())
   answeredAt           DateTime?
+  session              InterviewSession @relation(fields: [sessionId], references: [id])
 }
