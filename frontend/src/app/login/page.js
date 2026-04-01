@@ -1,75 +1,87 @@
-'use client';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Mail, Lock, ChevronRight } from "lucide-react";
 
 export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const router = useRouter();
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    // TODO: Call API
-    router.push('/dashboard');
+    const res = await fetch("http://localhost:5000/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+    if (data.token) {
+      localStorage.setItem("token", data.token);
+      router.push("/dashboard");
+    } else {
+      alert("Login failed");
+    }
   };
 
   return (
-    <div className="auth-container">
-      <div className="glass auth-card fade-in">
-        <h2>Welcome Back</h2>
-        <p>Login to continue your preparation</p>
-        <form onSubmit={handleLogin}>
-          <div className="input-group">
-            <label>Email Address</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+    <div className="flex items-center justify-center min-h-[calc(100vh-64px)] px-4">
+      <Card className="w-full max-w-md shadow-lg border-slate-200">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold text-center">Welcome Back</CardTitle>
+          <CardDescription className="text-center">
+            Enter your credentials to access your interview coach
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+                <Input 
+                  id="email" 
+                  type="email" 
+                  placeholder="name@example.com" 
+                  className="pl-10"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required 
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+                <Input 
+                  id="password" 
+                  type="password" 
+                  className="pl-10"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required 
+                />
+              </div>
+            </div>
+            <Button type="submit" className="w-full h-11">
+              Login <ChevronRight className="ml-2 w-4 h-4" />
+            </Button>
+          </form>
+        </CardContent>
+        <CardFooter className="flex flex-col space-y-4">
+          <div className="text-sm text-center text-slate-500">
+            Don't have an account?{" "}
+            <a href="/register" className="text-blue-600 hover:underline font-medium">
+              Sign up
+            </a>
           </div>
-          <div className="input-group">
-            <label>Password</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-          </div>
-          <button type="submit" className="btn-primary-full">Sign In</button>
-        </form>
-        <p className="footer-links">
-           Don't have an account? <a href="/register">Sign Up</a>
-        </p>
-      </div>
-      <style jsx>{`
-        .auth-container {
-          height: calc(100vh - 80px);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .auth-card {
-          width: 100%;
-          max-width: 450px;
-          padding: 3rem;
-        }
-        h2 { margin-bottom: 0.5rem; }
-        p { color: var(--text-muted); margin-bottom: 2rem; }
-        .input-group { margin-bottom: 1.5rem; }
-        label { display: block; margin-bottom: 0.5rem; color: var(--text-main); font-size: 0.9rem; }
-        input {
-          width: 100%;
-          background: var(--bg-dark);
-          border: 1px solid var(--border);
-          padding: 0.8rem;
-          border-radius: 8px;
-          color: white;
-          outline: none;
-        }
-        input:focus { border-color: var(--primary); }
-        .btn-primary-full {
-          width: 100%;
-          background: var(--primary);
-          padding: 1rem;
-          color: white;
-          font-size: 1rem;
-          margin-top: 1rem;
-        }
-        .footer-links { margin-top: 2rem; text-align: center; font-size: 0.9rem; }
-        .footer-links a { color: var(--primary); font-weight: 600; }
-      `}</style>
+        </CardFooter>
+      </Card>
     </div>
   );
 }

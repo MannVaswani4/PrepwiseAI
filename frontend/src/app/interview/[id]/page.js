@@ -1,39 +1,46 @@
-'use client';
-import { useState, useEffect, useRef } from 'react';
+"use client";
+import { useState, useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Mic2, MicOff, Send, MessageSquare, Info, User, Bot, Sparkles, Activity } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function InterviewRoom() {
-  const [status, setStatus] = useState('idle'); // idle, listening, processing, speaking
+  const [status, setStatus] = useState("idle"); // idle, listening, processing, speaking
   const [transcript, setTranscript] = useState([]);
   const [isRecording, setIsRecording] = useState(false);
   const [sessionId, setSessionId] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(null);
-  
+
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const transcriptEndRef = useRef(null);
 
-  // Initialize Interview
   useEffect(() => {
     const startInterview = async () => {
-      // Mock start for now - in real app, this comes from the setup page
-      const res = await fetch('http://localhost:5000/interview/start', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-        body: JSON.stringify({ role: 'Software Engineer' })
+      const res = await fetch("http://localhost:5000/interview/start", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({ role: "Software Engineer" }),
       });
       const data = await res.json();
       setSessionId(data.session.id);
       setCurrentQuestion(data.firstQuestion);
-      setTranscript([{ type: 'ai', text: data.firstQuestion.questionText }]);
+      setTranscript([{ id: Date.now(), type: "ai", text: data.firstQuestion.questionText }]);
       if (data.firstQuestion.audioUrl) playAudio(data.firstQuestion.audioUrl);
     };
     startInterview();
   }, []);
 
   const playAudio = (url) => {
-    setStatus('speaking');
+    setStatus("speaking");
     const audio = new Audio(`http://localhost:5000${url}`);
-    audio.onended = () => setStatus('idle');
+    audio.onended = () => setStatus("idle");
     audio.play();
   };
 
@@ -41,48 +48,45 @@ export default function InterviewRoom() {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     mediaRecorderRef.current = new MediaRecorder(stream);
     audioChunksRef.current = [];
-    
     mediaRecorderRef.current.ondataavailable = (e) => audioChunksRef.current.push(e.data);
     mediaRecorderRef.current.onstop = async () => {
-      const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+      const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
       sendAnswer(audioBlob);
     };
-    
     mediaRecorderRef.current.start();
     setIsRecording(true);
-    setStatus('listening');
+    setStatus("listening");
   };
 
   const stopRecording = () => {
     mediaRecorderRef.current.stop();
     setIsRecording(false);
-    setStatus('processing');
+    setStatus("processing");
   };
 
   const sendAnswer = async (blob) => {
     const formData = new FormData();
-    formData.append('audio', blob);
-    formData.append('sessionId', sessionId);
-    formData.append('questionId', currentQuestion.id);
+    formData.append("audio", blob);
+    formData.append("sessionId", sessionId);
+    formData.append("questionId", currentQuestion.id);
 
     try {
-      const res = await fetch('http://localhost:5000/interview/answer', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-        body: formData
+      const res = await fetch("http://localhost:5000/interview/answer", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        body: formData,
       });
       const data = await res.json();
-      
-      setTranscript(prev => [
-        ...prev, 
-        { type: 'user', text: data.evaluation.transcript },
-        { type: 'ai', text: data.nextQuestion.questionText }
+      setTranscript((prev) => [
+        ...prev,
+        { id: Date.now() + 1, type: "user", text: data.evaluation.transcript },
+        { id: Date.now() + 2, type: "ai", text: data.nextQuestion.questionText },
       ]);
       setCurrentQuestion(data.nextQuestion);
       if (data.nextQuestion.audioUrl) playAudio(data.nextQuestion.audioUrl);
     } catch (error) {
       console.error(error);
-      setStatus('idle');
+      setStatus("idle");
     }
   };
 
@@ -92,142 +96,196 @@ export default function InterviewRoom() {
   };
 
   useEffect(() => {
-    transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    transcriptEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [transcript]);
 
   return (
-    <div className="interview-room">
-      <div className="main-stage">
-        {/* AI Visualization */}
-        <div className="ai-viewer glass">
-          <div className="video-placeholder">
-            <div className={`ai-avatar ${status === 'speaking' ? 'pulse' : ''}`}>
-               AI
+    <div className="flex h-[calc(100vh-80px)] bg-slate-50 relative overflow-hidden">
+      <div className="absolute inset-0 mesh-gradient opacity-30 -z-10" />
+      
+      {/* Main Interview Area */}
+      <div className="flex-1 flex flex-col p-8 space-y-8">
+        <Card className="flex-1 glass border-white/60 overflow-hidden relative flex flex-col items-center justify-center rounded-[3rem]">
+          <div className="absolute top-10 left-10 flex items-center gap-4">
+             <div className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border border-red-100 shadow-sm">
+                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                Live AI Session
+             </div>
+             <div className="px-4 py-2 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border border-blue-100 shadow-sm">
+                Software Engineering • Round 1
+             </div>
+          </div>
+          
+          <div className="space-y-12 flex flex-col items-center">
+            {/* AI Avatar / Waveform */}
+            <div className="relative group">
+              <div className={cn(
+                "w-64 h-64 rounded-full bg-white flex items-center justify-center border-[12px] border-white shadow-2xl transition-all duration-700 relative z-10",
+                status === "speaking" && "ring-[24px] ring-blue-100/50 scale-105",
+                status === "listening" && "ring-[24px] ring-red-100/50 scale-105"
+              )}>
+                <AnimatePresence mode="wait">
+                  {status === "speaking" ? (
+                    <motion.div
+                      key="speaking"
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.8, opacity: 0 }}
+                    >
+                      <Bot className="w-24 h-24 text-blue-600" />
+                    </motion.div>
+                  ) : status === "listening" ? (
+                    <motion.div
+                      key="listening"
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.8, opacity: 0 }}
+                    >
+                      <Activity className="w-24 h-24 text-red-500 animate-pulse" />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="idle"
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.8, opacity: 0 }}
+                    >
+                      <User className="w-24 h-24 text-slate-300" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+              
+              {/* Animated Rings for Speaking */}
+              {status === "speaking" && (
+                <>
+                  <div className="absolute inset-0 rounded-full bg-blue-500/10 animate-ping" />
+                  <div className="absolute inset-0 rounded-full bg-blue-400/5 animate-ping [animation-delay:0.5s]" />
+                </>
+              )}
+            </div>
+            
+            <div className="text-center space-y-3">
+               <h2 className="text-3xl font-black text-slate-900 tracking-tight transition-all">
+                 {status === "speaking" ? "AI Coach is posing a question..." : 
+                  status === "listening" ? "Listening to your response..." : 
+                  status === "processing" ? "Synthesizing your semantic score..." : "Ready to begin"}
+               </h2>
+               <div className="flex items-center justify-center gap-2">
+                 <span className="w-2 h-2 rounded-full bg-blue-500" />
+                 <p className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.2em]">Voice-Interactive Mode Active</p>
+               </div>
             </div>
           </div>
-          <div className="status-indicator">
-            {status === 'listening' && <span className="listening">● Listening...</span>}
-            {status === 'processing' && <span className="processing">Processing Answer...</span>}
-            {status === 'speaking' && <span className="speaking">AI is speaking...</span>}
-            {status === 'idle' && <span>Ready</span>}
-          </div>
-        </div>
 
-        {/* Controls */}
-        <div className="controls glass">
-          <button 
-            className={`mic-btn ${isRecording ? 'active' : ''}`}
-            onClick={toggleRecording}
-          >
-            {isRecording ? '🛑 Stop' : '🎤 Start Answer'}
-          </button>
-        </div>
+          {/* Action Buttons */}
+          <div className="absolute bottom-16 flex items-center gap-6">
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              <Button 
+                size="lg" 
+                variant={isRecording ? "destructive" : "premium"} 
+                className={cn(
+                  "h-24 w-24 rounded-[2rem] shadow-2xl transition-all border-none",
+                  isRecording ? "bg-red-500 shadow-red-500/30" : "bg-blue-600 shadow-blue-500/30"
+                )}
+                onClick={toggleRecording}
+              >
+                {isRecording ? <MicOff className="w-8 h-8" /> : <Mic2 className="w-8 h-8" />}
+              </Button>
+            </motion.div>
+            
+            {!isRecording && status === "idle" && (
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest animate-pulse">
+                Click microphone to speak
+              </p>
+            )}
+          </div>
+        </Card>
       </div>
 
-      {/* Sidebar: Transcript & Feedback */}
-      <aside className="transcript-sidebar glass">
-        <h3>Interview Transcript</h3>
-        <div className="transcript-list">
-          {transcript.map((m, i) => (
-            <div key={i} className={`message ${m.type}`}>
-               <label>{m.type === 'ai' ? 'AI Interviewer' : 'You'}</label>
-               <p>{m.text}</p>
+      {/* Transcript Sidebar */}
+      <aside className="w-[500px] glass-dark flex flex-col shadow-3xl relative">
+        <div className="p-10 border-b border-white/10 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-500/20 rounded-lg">
+              <MessageSquare className="w-6 h-6 text-blue-400" />
             </div>
-          ))}
+            <h3 className="font-outfit font-black text-xl text-white tracking-tight">Active Analysis</h3>
+          </div>
+          <Button variant="ghost" size="icon" className="text-white/40 hover:text-white hover:bg-white/10">
+            <Info className="w-5 h-5" />
+          </Button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-10 space-y-8 scrollbar-hide">
+          <AnimatePresence initial={false}>
+            {transcript.map((m) => (
+              <motion.div 
+                key={m.id}
+                initial={{ opacity: 0, x: m.type === "user" ? 20 : -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className={cn(
+                  "flex flex-col gap-3 max-w-[90%]",
+                  m.type === "user" ? "ml-auto items-end" : "items-start"
+                )}
+              >
+                <div className="flex items-center gap-2 px-1">
+                  {m.type === "ai" && <Sparkles className="w-3 h-3 text-blue-400" />}
+                  <span className={cn(
+                    "text-[10px] uppercase font-black tracking-widest",
+                    m.type === "ai" ? "text-blue-400" : "text-slate-400"
+                  )}>
+                    {m.type === "ai" ? "AI COACH" : "CANDIDATE"}
+                  </span>
+                </div>
+                <div className={cn(
+                  "p-6 rounded-2xl text-sm leading-relaxed font-medium shadow-xl",
+                  m.type === "ai" 
+                    ? "bg-slate-800 text-slate-200 rounded-tl-none border border-white/5" 
+                    : "bg-blue-600 text-white rounded-tr-none shadow-blue-500/10"
+                )}>
+                  {m.text}
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
           <div ref={transcriptEndRef} />
         </div>
-        
-        <div className="live-feedback glass">
-          <h4>Live Evaluation</h4>
-          <p>Analyzing clarity and technical depth...</p>
+
+        {/* Real-time Insights Card */}
+        <div className="p-10 border-t border-white/10">
+          <Card className="border-white/10 bg-white/5 backdrop-blur-xl">
+            <CardContent className="p-6 space-y-5">
+               <div className="flex justify-between items-center text-xs font-black text-blue-400 uppercase tracking-widest">
+                  <div className="flex items-center gap-2">
+                    <Activity className="w-4 h-4" />
+                    <span>Real-time Insight Score</span>
+                  </div>
+                  <span className="text-xl">8.2<span className="text-[10px] text-white/30 ml-1">/ 10</span></span>
+               </div>
+               <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                 <motion.div 
+                   initial={{ width: 0 }}
+                   animate={{ width: "82%" }}
+                   className="h-full bg-gradient-to-r from-blue-500 to-indigo-500"
+                 />
+               </div>
+               <div className="bg-white/5 p-4 rounded-xl border border-white/5">
+                 <p className="text-[10px] text-slate-400 leading-relaxed font-semibold uppercase tracking-wider mb-2">
+                   Live Critique
+                 </p>
+                 <p className="text-sm text-slate-300 leading-relaxed font-medium">
+                   Current answer shows <span className="text-blue-400">excellent technical clarity</span>. 
+                   Try to elaborate more on the "Action" part of your next STAR response.
+                 </p>
+               </div>
+            </CardContent>
+          </Card>
         </div>
       </aside>
-
-      <style jsx>{`
-        .interview-room {
-          display: grid;
-          grid-template-columns: 1fr 400px;
-          height: calc(100vh - 80px);
-          background: #000;
-        }
-        .main-stage {
-          display: flex;
-          flex-direction: column;
-          padding: 2rem;
-          gap: 2rem;
-        }
-        .ai-viewer {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          position: relative;
-        }
-        .video-placeholder {
-          width: 300px;
-          height: 300px;
-          border-radius: 50%;
-          background: #1e293b;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .ai-avatar {
-          width: 150px;
-          height: 150px;
-          background: var(--primary);
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 2rem;
-          font-weight: 800;
-          box-shadow: 0 0 40px var(--primary);
-        }
-        .ai-avatar.pulse {
-          animation: avatarPulse 1.5s infinite;
-        }
-        @keyframes avatarPulse {
-          0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); }
-          70% { box-shadow: 0 0 0 50px rgba(99, 102, 241, 0); }
-          100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
-        }
-        .status-indicator { margin-top: 2rem; font-weight: 600; font-size: 1.1rem; }
-        .listening { color: var(--danger); animation: blink 1s infinite; }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        
-        .controls {
-          height: 100px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .mic-btn {
-          padding: 1rem 3rem;
-          font-size: 1.2rem;
-          background: var(--primary);
-          color: white;
-          border-radius: 50px;
-        }
-        .mic-btn.active { background: var(--danger); }
-        
-        /* Sidebar */
-        .transcript-sidebar {
-          border-left: 1px solid var(--border);
-          display: flex;
-          flex-direction: column;
-          padding: 2rem;
-          overflow: hidden;
-        }
-        .transcript-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 1.5rem; padding-right: 1rem; }
-        .message label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
-        .message p { margin-top: 0.25rem; }
-        .message.ai p { color: var(--accent); }
-        
-        .live-feedback { margin-top: 2rem; padding: 1.5rem; border-color: var(--primary); }
-        .live-feedback h4 { font-size: 0.9rem; margin-bottom: 0.5rem; text-transform: uppercase; color: var(--primary); }
-      `}</style>
     </div>
   );
 }
